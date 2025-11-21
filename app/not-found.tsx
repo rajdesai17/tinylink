@@ -1,6 +1,4 @@
-import Link from 'next/link';
-import { Home, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
 
@@ -37,22 +35,8 @@ export default function NotFound() {
                   <li>The link expired or never existed</li>
                 </ul>
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-                <Button asChild size="lg" className="gap-2">
-                  <Link href="/">
-                    <Home className="h-4 w-4" />
-                    Go to Dashboard
-                  </Link>
-                </Button>
-              </div>
             </CardContent>
           </Card>
-
-          {/* Additional Info */}
-          <p className="text-sm text-muted-foreground max-w-md">
-            Need help? Check the dashboard to see your active links or create a new one.
-          </p>
         </div>
       </main>
     </div>
