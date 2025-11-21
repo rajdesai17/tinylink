@@ -26,9 +26,10 @@ export default async function StatsPage({
     notFound();
   }
 
-  // Get base URL from environment or headers
+  // Get base URL from environment or use production URL
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || 'https://tinylink-kappa-sandy.vercel.app';
-  const shortUrl = `${baseUrl}/${link.code}`;
+  const fullShortUrl = `${baseUrl}/${link.code}`;
+  const shortPath = `/${link.code}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,11 +55,11 @@ export default async function StatsPage({
               <div className="flex items-center gap-2">
                 <input
                   type="text"
-                  value={shortUrl}
+                  value={fullShortUrl}
                   readOnly
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
                 />
-                <CopyButton text={shortUrl} />
+                <CopyButton text={fullShortUrl} />
               </div>
             </div>
 
@@ -94,7 +95,7 @@ export default async function StatsPage({
 
             <div className="pt-4">
               <a
-                href={shortUrl}
+                href={shortPath}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
