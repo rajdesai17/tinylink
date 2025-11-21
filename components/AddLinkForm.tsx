@@ -1,108 +1,154 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { createLinkSchema } from '@/lib/validations';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Loader2, Link as LinkIcon, Wand2 } from "lucide-react";
+import { toast } from "sonner";
 
-export default function AddLinkForm({ onLinkAdded }: { onLinkAdded: () => void }) {
-  const [url, setUrl] = useState('');
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState('');
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
+const formSchema = z.object({
+  url: z.string().url("Please enter a valid URL (e.g., https://example.com)"),
+  code: z
+    .string()
+    .min(6, "Code must be at least 6 characters")
+    .max(8, "Code must be at most 8 characters")
+    .regex(/^[a-zA-Z0-9]*$/, "Only alphanumeric characters are allowed")
+    .optional()
+    .or(z.literal("")),
+});
 
+interface AddLinkFormProps {
+  onLinkAdded: () => void;
+}
+
+export default function AddLinkForm({ onLinkAdded }: AddLinkFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      url: "",
+      code: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
     try {
-      // Validate input
-      const validatedData = createLinkSchema.parse({ url, code: code || undefined });
+      const payload = {
+        url: values.url,
+        code: values.code || undefined,
+      };
 
-      const response = await fetch('/api/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validatedData),
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create link');
+        if (response.status === 409) {
+          form.setError("code", { 
+            type: "manual", 
+            message: "This code is already taken. Please try another one." 
+          });
+          return;
+        }
+        throw new Error(data.error || "Failed to create link");
       }
 
-      setSuccess(`Link created! Short URL: ${window.location.origin}/${data.code}`);
-      setUrl('');
-      setCode('');
+      toast.success("Link created successfully!", {
+        description: `Short link: ${window.location.host}/${data.code}`,
+      });
+      
+      form.reset();
       onLinkAdded();
-    } catch (err) {
-      if (err && typeof err === 'object' && 'errors' in err) {
-        const zodError = err as { errors: Array<{ message: string }> };
-        setError(zodError.errors[0].message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An error occurred');
-      }
+    } catch (error) {
+      toast.error("Error creating link", {
+        description: error instanceof Error ? error.message : "Something went wrong",
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
-          Long URL *
-        </label>
-        <input
-          type="text"
-          id="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://example.com/very-long-url"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-          Custom Code (optional)
-        </label>
-        <input
-          type="text"
-          id="code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="my-custom-code"
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Leave empty to generate a random code
-        </p>
-      </div>
-
-      {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-          {success}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-      >
-        {loading ? 'Creating...' : 'Shorten URL'}
-      </button>
-    </form>
+    <Card className="border-none shadow-none sm:border sm:shadow-sm">
+      <CardHeader className="px-0 sm:px-6">
+        <CardTitle>Create New Link</CardTitle>
+        <CardDescription>
+          Enter a long URL to generate a short link. You can optionally provide a custom code.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="px-0 sm:px-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Destination URL</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="https://example.com/very/long/url" className="pl-9" {...field} />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Code (Optional)</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Wand2 className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="custom-code" className="pl-9" {...field} />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Leave empty to auto-generate a random 6-character code.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Short Link"
+              )}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

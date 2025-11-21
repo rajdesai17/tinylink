@@ -1,17 +1,37 @@
-'use client';
+"use client";
 
-export function CopyButton({ text }: { text: string }) {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+import { useState } from "react";
+import { Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+interface CopyButtonProps {
+  text: string;
+}
+
+export function CopyButton({ text }: CopyButtonProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy");
+    }
   };
 
   return (
-    <button
+    <Button
+      variant="outline"
+      size="icon"
       onClick={handleCopy}
-      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      className={copied ? "text-green-600 border-green-600" : ""}
     >
-      Copy
-    </button>
+      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      <span className="sr-only">Copy</span>
+    </Button>
   );
 }
