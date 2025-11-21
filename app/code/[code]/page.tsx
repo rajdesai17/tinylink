@@ -1,20 +1,13 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { CopyButton } from '@/components/CopyButton';
+import { getLink } from '@/lib/db';
 
 async function getLinkStats(code: string) {
-  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
-  
   try {
-    const response = await fetch(`${baseUrl}/api/links/${code}`, {
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return await response.json();
+    const link = await getLink(code);
+    return link;
   } catch (error) {
     console.error('Error fetching link stats:', error);
     return null;
@@ -33,7 +26,9 @@ export default async function StatsPage({
     notFound();
   }
 
-  const shortUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/${link.code}`;
+  // Get base URL from environment or headers
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.BASE_URL || 'https://tinylink-kappa-sandy.vercel.app';
+  const shortUrl = `${baseUrl}/${link.code}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -63,15 +58,7 @@ export default async function StatsPage({
                   readOnly
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
                 />
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(shortUrl);
-                    alert('Copied to clipboard!');
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Copy
-                </button>
+                <CopyButton text={shortUrl} />
               </div>
             </div>
 
