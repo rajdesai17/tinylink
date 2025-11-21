@@ -6,6 +6,15 @@ TinyLink is a production URL shortener built with Next.js 16 App Router, TypeScr
 **Live:** https://tinylink-kappa-sandy.vercel.app  
 **Database:** Neon Postgres via Vercel
 
+### Assignment Compliance
+This project implements the complete TinyLink specification from `overview.md`:
+- ✅ All required pages: Dashboard (`/`), Stats (`/code/:code`), Redirect (`/:code`), Health (`/healthz`)
+- ✅ All required APIs: POST/GET `/api/links`, GET/DELETE `/api/links/:code` with correct status codes
+- ✅ HTTP 302 redirects (not 307) for short URLs
+- ✅ Click tracking with `last_clicked_at` timestamp updates
+- ✅ 409 status for duplicate codes, 404 after deletion
+- ✅ Custom code support with global uniqueness validation
+
 ## Critical Architecture Patterns
 
 ### Server vs Client Component Strategy
@@ -104,9 +113,15 @@ if (!validation.success) {
 ```
 
 ### Error Handling
-- **API Routes:** Return proper HTTP status codes (400 validation, 409 duplicate, 404 not found, 500 server error)
+- **API Routes:** Return proper HTTP status codes per spec:
+  - `201` - Successful link creation
+  - `400` - Validation errors (invalid URL, code format)
+  - `409` - Duplicate code (required by autograding spec)
+  - `404` - Link not found
+  - `500` - Server errors
 - **Client Components:** Use try/catch with user-friendly messages
 - **Database:** Handle PostgreSQL-specific errors (code 23505 for unique violations)
+- **Redirects:** Always use `302` status (temporary redirect), not 307
 
 ### Component Patterns
 1. **Client components need `'use client'` directive** - Forms, buttons, state management
@@ -117,29 +132,55 @@ if (!validation.success) {
 ```
 app/
 ├── page.tsx                    # Dashboard (client) - Create/list links
-├── [code]/route.ts            # Redirect handler (server) - GET /:code
+├── [code]/route.ts            # Redirect handler (server) - GET /:code → 302 redirect
 ├── code/[code]/page.tsx       # Stats page (server) - View link details
 ├── api/links/
-│   ├── route.ts               # POST create, GET list all
-│   └── [code]/route.ts        # GET details, DELETE link
-└── healthz/route.ts           # Health check endpoint
+│   ├── route.ts               # POST create (409 if exists), GET list all
+│   └── [code]/route.ts        # GET details, DELETE link (→ 404 on redirect)
+└── healthz/route.ts           # Health check - Returns { ok: true, version: "1.0" }
 ```
+
+**CRITICAL:** All routes must follow assignment spec exactly for autograding:
+- `/` - Dashboard page
+- `/:code` - 302 redirect or 404
+- `/code/:code` - Stats page
+- `/api/links` - POST (409 on duplicate), GET
+- `/api/links/:code` - GET, DELETE
+- `/healthz` - Returns 200 with `{ ok: true, version: "1.0" }`
 
 ## Common Pitfalls
 
-1. **URL Construction:** Use relative paths `/${code}` for internal links, not full URLs (causes doubling: `domain.com/domain.com/code`)
-2. **Redirect in Route Handlers:** Use `NextResponse.redirect(url)`, NOT `redirect()` from `next/navigation` (client-only)
-3. **Environment Variables:** Server-side uses `process.env.VAR`, client-side needs `NEXT_PUBLIC_` prefix
-4. **Async Params:** Always await params in Next.js 16 dynamic routes
+1. **HTTP Status Codes (CRITICAL FOR AUTOGRADING):**
+   - Duplicate codes MUST return `409` (not 400)
+   - Redirects MUST use `302` status (not default 307)
+   - Deleted links MUST return `404` on redirect attempts
+   - Health endpoint MUST return `200` with exact format
+
+2. **URL Construction:** Use relative paths `/${code}` for internal links, not full URLs (causes doubling: `domain.com/domain.com/code`)
+
+3. **Redirect in Route Handlers:** Use `NextResponse.redirect(url, { status: 302 })`, NOT `redirect()` from `next/navigation` (client-only)
+
+4. **Environment Variables:** Server-side uses `process.env.VAR`, client-side needs `NEXT_PUBLIC_` prefix
+
+5. **Async Params:** Always await params in Next.js 16 dynamic routes
+
+6. **Click Tracking:** `incrementClicks()` must update BOTH `clicks` count AND `last_clicked_at` timestamp (see `lib/db.ts`)
 
 ## Testing Strategy
-Manual testing checklist:
-- Create link with auto-generated code
-- Create link with custom code (6-8 chars)
-- Duplicate code prevention (409 error)
-- Redirect works and increments clicks
-- Stats page displays correct data
-- Delete removes link (404 on access)
+**IMPORTANT:** This project will be autograded. Manual testing checklist:
+- ✅ Create link with auto-generated code → Returns 201 with code
+- ✅ Create link with custom code (6-8 chars) → Returns 201
+- ✅ Duplicate code → Returns 409 status code (required by spec)
+- ✅ Redirect `/:code` → Returns 302 (not 307), increments clicks, updates `last_clicked_at`
+- ✅ Stats page `/code/:code` → Displays URL, clicks, last clicked, created date
+- ✅ Delete link → Returns success
+- ✅ Access deleted link `/:code` → Returns 404 (required by spec)
+- ✅ Health endpoint `/healthz` → Returns 200 with `{ ok: true, version: "1.0" }`
+
+**Autograding requirements:**
+- Stable URL conventions (no deviations)
+- Correct HTTP status codes (409, 302, 404)
+- Health endpoint exact format
 
 ## Database Schema
 ```sql
