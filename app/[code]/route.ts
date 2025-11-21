@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notFound } from 'next/navigation';
 import { getLink, incrementClicks } from '@/lib/db';
 
 // GET /:code - Redirect to the original URL
@@ -11,7 +12,7 @@ export async function GET(
     const link = await getLink(code);
     
     if (!link) {
-      return new Response('Not Found', { status: 404 });
+      notFound();
     }
 
     // Increment click count (fire and forget)
