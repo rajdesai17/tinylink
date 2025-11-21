@@ -8,22 +8,18 @@ export default async function RedirectPage({
 }) {
   const { code } = await params;
   
-  try {
-    const link = await getLink(code);
-    
-    if (!link) {
-      notFound();
-    }
-
-    // Increment click count (fire and forget)
-    incrementClicks(code).catch((err) => 
-      console.error('Error updating clicks:', err)
-    );
-
-    // 302 redirect to the original URL
-    redirect(link.url);
-  } catch (error) {
-    console.error('Error redirecting:', error);
+  const link = await getLink(code);
+  
+  if (!link) {
     notFound();
   }
+
+  // Increment click count (fire and forget)
+  incrementClicks(code).catch((err) => 
+    console.error('Error updating clicks:', err)
+  );
+
+  // 302 redirect to the original URL
+  // Note: redirect() throws internally, so don't wrap in try/catch
+  redirect(link.url);
 }
