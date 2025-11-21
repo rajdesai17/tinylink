@@ -24,9 +24,10 @@ async function getLinkStats(code: string) {
 export default async function StatsPage({
   params,
 }: {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }) {
-  const link = await getLinkStats(params.code);
+  const { code } = await params;
+  const link = await getLinkStats(code);
 
   if (!link) {
     notFound();

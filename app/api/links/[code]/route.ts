@@ -4,10 +4,11 @@ import { getLink, deleteLink } from '@/lib/db';
 // GET /api/links/:code - Get link details and stats
 export async function GET(
   request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const link = await getLink(params.code);
+    const { code } = await params;
+    const link = await getLink(code);
 
     if (!link) {
       return NextResponse.json(
@@ -29,10 +30,11 @@ export async function GET(
 // DELETE /api/links/:code - Delete a link
 export async function DELETE(
   request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const link = await getLink(params.code);
+    const { code } = await params;
+    const link = await getLink(code);
     
     if (!link) {
       return NextResponse.json(
@@ -41,7 +43,7 @@ export async function DELETE(
       );
     }
 
-    await deleteLink(params.code);
+    await deleteLink(code);
 
     return NextResponse.json(
       { message: 'Link deleted successfully' },

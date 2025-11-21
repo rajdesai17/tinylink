@@ -4,17 +4,18 @@ import { getLink, incrementClicks } from '@/lib/db';
 // GET /:code - Redirect to the original URL
 export async function GET(
   request: Request,
-  { params }: { params: { code: string } }
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const link = await getLink(params.code);
+    const { code } = await params;
+    const link = await getLink(code);
     
     if (!link) {
       return new Response('Not Found', { status: 404 });
     }
 
     // Increment click count (fire and forget)
-    incrementClicks(params.code).catch((err) => 
+    incrementClicks(code).catch((err) => 
       console.error('Error updating clicks:', err)
     );
 
