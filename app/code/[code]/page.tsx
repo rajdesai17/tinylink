@@ -1,8 +1,14 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { ArrowLeft, ExternalLink, MousePointer2, Calendar } from 'lucide-react';
 import Header from '@/components/Header';
 import { CopyButton } from '@/components/CopyButton';
 import { getLink } from '@/lib/db';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 async function getLinkStats(code: string) {
   try {
@@ -32,79 +38,92 @@ export default async function StatsPage({
   const shortPath = `/${link.code}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50/50">
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="mb-6">
-            <Link
-              href="/"
-              className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-2"
-            >
-              ← Back to Dashboard
+      <main className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className="mb-6">
+          <Button variant="ghost" asChild className="pl-0 hover:pl-0 hover:bg-transparent text-muted-foreground hover:text-foreground">
+            <Link href="/" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
             </Link>
-          </div>
-
-          <h1 className="text-3xl font-bold mb-6">Link Statistics</h1>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Short URL
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={fullShortUrl}
-                  readOnly
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                />
-                <CopyButton text={fullShortUrl} />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Original URL
-              </label>
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 break-all"
-              >
-                {link.url}
-              </a>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="bg-blue-50 p-6 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {link.clicks}
-                </div>
-                <div className="text-sm text-gray-600">Total Clicks</div>
-              </div>
-
-              <div className="bg-green-50 p-6 rounded-lg">
-                <div className="text-lg font-semibold text-green-600 mb-2">
-                  {new Date(link.created_at).toLocaleDateString()}
-                </div>
-                <div className="text-sm text-gray-600">Created On</div>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <a
-                href={shortPath}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                Test Link
-              </a>
-            </div>
-          </div>
+          </Button>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Link Statistics</CardTitle>
+            <CardDescription>Detailed analytics for your short link</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <div className="grid gap-6">
+              <div className="space-y-2">
+                <Label>Short URL</Label>
+                <div className="flex items-center gap-2">
+                  <Input value={fullShortUrl} readOnly className="font-mono bg-muted" />
+                  <CopyButton text={fullShortUrl} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Original URL</Label>
+                <div className="flex items-center gap-2 p-3 rounded-md border bg-muted/50">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline break-all"
+                  >
+                    {link.url}
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 bg-primary/10 rounded-full mb-4">
+                    <MousePointer2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="text-4xl font-bold text-primary mb-1">
+                    {link.clicks}
+                  </div>
+                  <div className="text-sm font-medium text-muted-foreground">Total Clicks</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 bg-muted rounded-full mb-4">
+                    <Calendar className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <div className="text-xl font-semibold mb-1">
+                    {new Date(link.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="text-sm font-medium text-muted-foreground">Created On</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex justify-center pt-4">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <a
+                  href={shortPath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  Visit Short Link
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
