@@ -1,13 +1,14 @@
 import { z } from 'zod';
 
 export const createLinkSchema = z.object({
-  url: z.string().url('Please enter a valid URL'),
-  code: z
-    .string()
-    .min(3, 'Code must be at least 3 characters')
-    .max(20, 'Code must be at most 20 characters')
-    .regex(/^[a-zA-Z0-9_-]+$/, 'Code can only contain letters, numbers, hyphens, and underscores')
-    .optional(),
+  url: z.string().url('Invalid URL format'),
+  code: z.string()
+    .regex(/^[A-Za-z0-9]{6,8}$/, 'Code must be 6-8 alphanumeric characters')
+    .optional()
+});
+
+export const codeParamSchema = z.object({
+  code: z.string().regex(/^[A-Za-z0-9]{6,8}$/)
 });
 
 export type CreateLinkInput = z.infer<typeof createLinkSchema>;

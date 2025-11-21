@@ -4,8 +4,8 @@ export async function createLink(url: string, code: string) {
   try {
     await sql`INSERT INTO links (code, url) VALUES (${code}, ${url})`;
     return { success: true };
-  } catch (error: any) {
-    if (error.code === '23505') { // Unique constraint violation
+  } catch (error: unknown) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
       return { success: false, error: 'Code already exists' };
     }
     throw error;
