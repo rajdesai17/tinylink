@@ -29,15 +29,15 @@ A modern, production-ready URL shortener built with Next.js 16, TypeScript, and 
 graph TB
     subgraph "Client Browser"
         A[User] -->|Creates Link| B[Dashboard]
-        A -->|Visits Short URL| C[/:code Route]
-        A -->|Views Analytics| D[/code/:code Page]
+        A -->|Visits Short URL| C[Route: /:code]
+        A -->|Views Analytics| D[Page: /code/:code]
     end
     
     subgraph "Next.js App Router"
-        B -->|POST /api/links| E[API: Create Link]
-        B -->|GET /api/links| F[API: List Links]
-        C -->|GET /:code| G[Redirect Handler]
-        D -->|Server Component| H[Stats Page]
+        B -->|POST /api/links| E[API_CreateLink]
+        B -->|GET /api/links| F[API_ListLinks]
+        C -->|GET /:code| G[RedirectHandler]
+        D -->|Server Component| H[StatsPage]
         
         E -->|Insert| I[(Postgres DB)]
         F -->|Query| I
@@ -55,6 +55,7 @@ graph TB
     style I fill:#2196F3
     style G fill:#FF9800
     style K fill:#F44336
+
 ```
 
 ### How It Works
@@ -359,3 +360,4 @@ Contributions are welcome! Please open an issue or submit a pull request.
 ---
 
 Built with ❤️ using Next.js 16 and shadcn/ui
+
