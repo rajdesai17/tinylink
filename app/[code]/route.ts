@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { NextResponse } from 'next/server';
 import { getLink, incrementClicks } from '@/lib/db';
 
 // GET /:code - Redirect to the original URL
@@ -19,8 +19,8 @@ export async function GET(
       console.error('Error updating clicks:', err)
     );
 
-    // 302 redirect
-    return redirect(link.url);
+    // 302 redirect to the original URL
+    return NextResponse.redirect(link.url, { status: 302 });
   } catch (error) {
     console.error('Error redirecting:', error);
     return new Response('Internal Server Error', { status: 500 });
